@@ -14,30 +14,27 @@ import ru.netology.ibank.page.VerificationPage;
 public class Steps {
     private static LoginPage loginPage;
     private static DashboardPage dashboardPage;
-    private static VerificationPage verificationPage;
-    private static TransferPage transferPage;
 
-    @Пусть("пользователь залогинен с именем «vasya» и паролем «qwerty123»")
+    @Пусть("пользователь залогинен с именем {string} и паролем {string}")
     public void authPage(String login, String password) {
         loginPage = Selenide.open("http://localhost:9999", LoginPage.class);
-        var code = DataHelper.getAuthInfo();
         var authInfo = DataHelper.getOthersInfo(login, password);
         var verificationPage = loginPage.validLogin(authInfo);
-        dashboardPage = verificationPage.validVerify(DataHelper.getVerificationCodeFor(code));
+        dashboardPage = verificationPage.validVerify(DataHelper.getVerificationCodeFor());
     }
 
-    @Когда("когда пользователь переводит 5 000 рублей с карты с номером 5559 0000 0000 0002 на свою 1 карту с главной страницы,")
+    @Когда("пользователь переводит {string} рублей с карты с номером {string} на свою {int} карту с главной страницы,")
     public void transfer(String amount, String firstNumberCard, int secondNumberCard) {
-        var cardNumber1 = DataHelper.getFirstCardNumber();
-        var cardNumber2 = DataHelper.getSecondCardNumber();
-        var transferPage = dashboardPage.transferPage1(cardNumber1);
-        var dashboardPage = transferPage.transfer(amount, cardNumber2);
+        var secondCard = DataHelper.getCardIndex(secondNumberCard);
+        var transferPage = dashboardPage.transferPage(secondCard);
+        transferPage.transfer(amount, DataHelper.getCardNumber(firstNumberCard));
     }
 
-    @Тогда("баланс его 1 карты из списка на главной странице должен стать 15 000 рублей.")
+    @Тогда("баланс его {int} карты из списка на главной странице должен стать {int} рублей.")
     public void balance(int cardNumber, int newBalance) {
-        cardNumber = dashboardPage.getFirstCardBalance();
-        Assertions.assertEquals(newBalance, cardNumber);
+        var cardIndex = cardNumber - 1;
+        var actualBalance = dashboardPage.getCardBalanceForIndex(cardIndex);
+        Assertions.assertEquals(newBalance, actualBalance);
     }
 }
 
